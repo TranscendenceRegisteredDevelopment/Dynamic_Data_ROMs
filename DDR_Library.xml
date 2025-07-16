@@ -1,0 +1,374 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+	<!ENTITY DDR_unidDDRLibrary			    "0xA0030019">
+
+	<!ENTITY DDR_baDataRom                  "0xA0031900">
+	<!ENTITY DDR_vvDataLogs                 "0xA0031901">
+	<!ENTITY DDR_vvTempData			        "0xA0031902">
+	<!ENTITY DDR_vvLang				        "0xA0031903">
+	<!ENTITY DDR_dsListRoms			        "0xA0031904">
+	<!ENTITY DDR_dsViewLog			        "0xA0031905">
+
+	<!ENTITY DDR_unidDDRLibCover			"0xA00319FF">
+
+	<!-- EXTERNAL -->
+]>
+
+<TranscendenceLibrary UNID="&DDR_unidDDRLibrary;"
+	name="Dynamic Data Roms - Library"
+	credits="Arisaya"
+	release="1"
+	version="1.0.0.0"
+	apiVersion="53"
+	coverImageID=	"&DDR_unidDDRLibCover;"
+	>
+	<Image UNID="&DDR_unidDDRLibCover;"	bitmap="resources/images/covers/DDRCover.png"/>
+
+	<!-- Include the core libraries for API29+ -->
+	<Library unid="&unidCoreTypesLibrary;"/>
+	<Library unid="&unidRPGLibrary;"/>
+	<Library unid="&unidGalaxyLibrary;"/>
+	<Library unid="&unidHumanSpaceLibrary;"/>
+
+    <!-- Base Rom -->
+
+	<ItemType UNID="&DDR_baDataRom;"
+			name=				"(Dynamic Data ROM Base)"
+			level=				"1"
+			value=				"0"
+			mass=				"1"
+			frequency=			"notrandom"
+			attributes=			"NotForSale"
+
+			useScreen=			"&dsUseDataROM;"
+
+			description=		"(This rom implements the code for lootable data roms)"
+			>
+		<Image imageID="&rsItems1;" imageX="192" imageY="96" imageWidth="96" imageHeight="96"/>
+		<Language>
+			<Text id="Title">
+				Placeholder title - override this in your rom
+			</Text>
+			<Text id="Text">
+				Placeholder text - override this in your rom
+			</Text>
+		</Language>
+	</ItemType>
+
+    <!-- Data Storage Types -->
+
+    <Type UNID="&DDR_vvDataLogs;" virtual="true"/>
+    <Type UNID="&DDR_vvTempData;" virtual="true"/>
+
+    <!-- Dock Screens -->
+    <!-- Data Rom Log DS -->
+    
+	<DockScreen UNID="&DDR_dsListRoms;"
+			name=				"=(objGetName gSource)"
+			type=				"customPicker"
+			backgroundID=		"&rsItemListScreen;"
+			>
+		<!-- Define the list we need -->
+		<List>
+			 (block
+			 	(
+					(romList (DDR_getLogs))
+			 		;;translate the romList into the (list ... (list 'name 'pic 'desc ...) ...) list that this needs
+					(pickerList (list))
+				)
+			 	(enum romList romData
+					(block ((theTitle (@ romData 'title)))
+						(lnkAppend pickerList 
+							(list 
+								;;set the display name
+								(if theTitle theTitle "Untitled Rom")
+								;;set the image
+								Nil
+								;;construct the description
+								Nil
+								;;attach data into a non-displaying 4th field
+								romData
+							)
+						)
+					)
+			 	)
+			 	pickerList
+			 )
+		</List>
+		<Panes>
+			<Default desc="Pick a file to view">
+			
+				<Initialize>
+					(block Nil
+						(scrEnableAction gScreen 0 True)
+						(scrEnableAction gScreen 1 True)
+						(scrEnableAction gScreen 2 True)
+					)
+				</Initialize>
+				<Actions>
+					<Action name="Open File" default="1" key="O">
+						(block (theRom)
+							(setq theRom (scrGetListEntry gScreen))
+							(DDR_setTemp DDR_tmpSelectedROM (item theRom 3));;save the slot list in here for the next dockscreen
+							(scrShowScreen gScreen &DDR_dsViewLog;)
+						)
+					</Action>
+					<Action name="Delete File" key="D">
+						(block
+							(
+								(romIdx (scrGetListCursor gScreen))
+							)
+							(DDR_delLog romIdx)
+							(scrShowScreen gScreen &DDR_dsListRoms;)
+						)
+					</Action>
+					<Action name="Exit" cancel="1" key="E">
+						(scrExitScreen gScreen)
+					</Action>
+				</Actions>
+			</Default>
+		</Panes>
+	</DockScreen>
+
+	<DockScreen UNID="&DDR_dsViewLog;"
+			name=				"=(objGetName gSource)"
+			backgroundID=		"none"
+			>
+		<Display>
+			<Text id="text" left="12" right="-12" top="16" bottom="-16"/>
+		</Display>
+
+		<Panes>
+			<Default desc="The saved file is blank.">
+				<OnPaneInit>
+					(block
+						(
+							(theRomData (DDR_getTemp DDR_tmpSelectedROM))
+							(theText (@ theRomData 'text))
+							(theTitle (@ theRomData 'title))
+						)
+
+						;	Display the text
+						(if theText
+                            (if theTitle
+                                (block Nil
+                                    (scrSetDisplayText gScreen "text" theText)
+                                    (scrSetDesc gScreen (cat "The file contains a document titled '" theTitle "'."))
+									(DDR_addScroll)
+                                    )
+                                (block Nil
+                                    (scrSetDisplayText gScreen "text" theText)
+                                    (scrSetDesc gScreen "The file contains a document.")
+									(DDR_addScroll)
+                                    )
+                                )
+							(block Nil
+								(scrSetDisplayText gScreen "text" "")
+								(scrSetDesc gScreen "The file is blank.")
+								(DDR_addScroll)
+								(DDR_disableScrollDown)
+								)
+							)
+						
+						;	Set the scroll position
+						(DDR_setTemp DDR_tmpScrollCount 0)
+						(DDR_setTemp 'DDR_sourceText (if theText theText ""))
+						(if (ls (count (split theText "\n\n")) 2) (DDR_disableScrollDown))
+						)
+				</OnPaneInit>
+				<Actions>
+					<Action name="Back" default="1" cancel="1" key="B">
+						(scrShowScreen gScreen &DDR_dsListRoms;)
+					</Action>
+				</Actions>
+			</Default>
+		</Panes>
+	</DockScreen>
+
+    <!-- Language -->
+
+    <Type UNID="&DDR_vvLang;" virtual="true">
+		<Language>
+			<Text id="ds.scrollUp">[PageUp] Scoll Up</Text>
+			<Text id="ds.scrollDown">[PageDown] Scoll Down</Text>
+		</Language>
+	</Type>
+
+    <!-- Overrides -->
+    
+	<DockScreen UNID="&dsUseDataROM;"
+			name=				"Ship's Interior"
+			backgroundID=		"none"
+			>
+		<Display>
+			<Text id="text" left="12" right="-12" top="16" bottom="-16">
+			</Text>
+		</Display>
+
+		<Panes>
+			<Default>
+				<OnPaneInit>
+					(block (
+							(theText (itmGetData gItem "Text"))
+							(theTitle (itmGetData gItem "Title"))
+						)
+
+						;	If we couldnt find the text and title, try other methods
+                        (if (not theTitle) (setq theTitle (typTranslate (itmGetType gItem) "Title")))
+						(if (not theText) (setq theText (typTranslate (itmGetType gItem) "Text")))
+
+                        (if (not theTitle) (setq theTitle (itmGetStaticData gItem "Title")))
+						(if (not theText) (setq theText (itmGetStaticData gItem "Text")))
+
+						;	Display the text
+						(if theText
+                            (if theTitle
+                                (block Nil
+                                    (scrSetDisplayText gScreen "text" theText)
+                                    (scrSetDesc gScreen (cat "The ROM contains a document titled '" theTitle "'."))
+									(DDR_addScroll)
+                                    )
+                                (block Nil
+                                    (scrSetDisplayText gScreen "text" theText)
+                                    (scrSetDesc gScreen "The ROM contains a document.")
+									(DDR_addScroll)
+                                    )
+                                )
+							(block Nil
+								(scrSetDisplayText gScreen "text" "")
+								(scrSetDesc gScreen "The ROM is blank.")
+								(DDR_addScroll)
+								(DDR_disableScrollDown)
+								)
+							)
+						
+						;	Set the scroll position
+						(DDR_setTemp DDR_tmpScrollCount 0)
+						(DDR_setTemp 'DDR_sourceText (if theText theText ""))
+						(if (ls (count (split theText "\n\n")) 2) (DDR_disableScrollDown))
+
+						;	Store the ROM (if auto logging is enabled)
+						(DDR_addLogAuto {title: theTitle text: theText})
+						)
+				</OnPaneInit>
+
+				<Actions>
+					<Action name="Done" key="D" default="1" cancel="1">
+						<Exit/>
+					</Action>
+				</Actions>
+			</Default>
+		</Panes>
+	</DockScreen>
+
+	<!-- Globals -->
+
+	<Globals>
+	(block Nil
+		;; 	Global Vars
+		(setq DDR_gEnableAutoLogging Nil)
+
+		;;	Global action IDs
+		(setq DDR_actScrollUp 'DDR_scrollUp)
+		(setq DDR_actScrollDown 'DDR_scrollDown)
+
+		;;	Global log helpers
+		(setq DDR_setLogs (lambda (logs) (typSetData &DDR_vvDataLogs; 'DDR_savedRoms logs)))
+		(setq DDR_getLogs (lambda Nil (typGetData &DDR_vvDataLogs; 'DDR_savedRoms)))
+
+		(setq DDR_addLog (lambda (log) (block (
+				(theLogs (DDR_getLogs))
+			)
+			(if (eq Nil theLogs) (setq theLogs (lnk)))
+			(DDR_setLogs (lnkAppend theLogs log))
+		)))
+
+		(setq DDR_addLogAuto (lambda (log) (block Nil
+			(if DDR_gEnableAutoLogging (DDR_addLog log))
+		)))
+
+		(setq DDR_delLog (lambda (logIdx) (block (
+				(theLogs (DDR_getLogs))
+			)
+			(DDR_setLogs (lnkRemove theLogs logIdx))
+		)))
+
+		;;	Global Temp keys
+		(setq DDR_tmpScrollCount 'DDR_scrollCount)
+		(setq DDR_tmpSourceTxt 'DDR_sourceText)
+		(setq DDR_tmpSelectedROM 'DDR_selectedRom)
+
+		;;	Global Temp helpers
+		(setq DDR_setTemp (lambda (key value) (typSetData &DDR_vvTempData; key value)))
+		(setq DDR_getTemp (lambda (key) (typGetData &DDR_vvTempData; key)))
+
+		;;	Scroll control helpers
+		(setq DDR_addScroll
+			(lambda Nil
+				(block Nil
+					(scrAddAction
+						gScreen
+						DDR_actScrollUp
+						0
+						(typTranslate &DDR_vvLang; 'ds.scrollUp)
+						"Page Up"
+						"pgUpKey"
+						(DDR_scrollUp)
+					)
+					(scrAddAction
+						gScreen
+						DDR_actScrollDown
+						1
+						(typTranslate &DDR_vvLang; 'ds.scrollDown)
+						"Page Down"
+						"pgDnKey"
+						(DDR_scrollDown)
+					)
+					(DDR_setTemp DDR_tmpScrollCount 0)
+					(DDR_disableScrollUp)
+				)
+			)
+		)
+
+		(setq DDR_enableScrollUp (lambda Nil (scrEnableAction gScreen DDR_actScrollUp True)))
+		(setq DDR_enableScrollDown (lambda Nil (scrEnableAction gScreen DDR_actScrollDown True)))
+		(setq DDR_disableScrollUp (lambda Nil (scrEnableAction gScreen DDR_actScrollUp Nil)))
+		(setq DDR_disableScrollDown (lambda Nil (scrEnableAction gScreen DDR_actScrollDown Nil)))
+
+		(setq DDR_scrollUp
+			(lambda Nil
+				(block (
+					(scrollCount (- (DDR_getTemp DDR_tmpScrollCount) 1))
+					(scrollChunks (split (DDR_getTemp DDR_tmpSourceTxt) "\n\n"))
+					(scrollTextChunks (subset scrollChunks scrollCount))
+					(scrolledText (join scrollTextChunks "\n\n"))
+					)
+					(scrSetDisplayText gScreen "text" scrolledText)
+					(DDR_setTemp DDR_tmpScrollCount scrollCount)
+					(if (eq 0 scrollCount) (DDR_disableScrollUp))
+					(DDR_enableScrollDown)
+				)
+			)
+		)
+
+		(setq DDR_scrollDown
+			(lambda Nil
+				(block (
+					(scrollCount (+ (DDR_getTemp DDR_tmpScrollCount) 1))
+					(scrollChunks (split (DDR_getTemp DDR_tmpSourceTxt) "\n\n"))
+					(scrollTextChunks (subset scrollChunks scrollCount))
+					(scrolledText (join scrollTextChunks "\n\n"))
+					(numChunks (count scrollTextChunks))
+					)
+					(scrSetDisplayText gScreen "text" scrolledText)
+					(DDR_setTemp DDR_tmpScrollCount scrollCount)
+					(if (eq 1 numChunks) (DDR_disableScrollDown))
+					(DDR_enableScrollUp)
+				)
+			)
+		)
+	)
+	</Globals>
+
+</TranscendenceLibrary>

@@ -1,0 +1,145 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+	<!ENTITY DDR_unidDDRDemoExtension		"0xD3140007">
+    
+	<!ENTITY DDR_itDemoROM			        "0xD3140700">
+	<!ENTITY DDR_itDemoROMTlisp		        "0xD3140701">
+
+	<!ENTITY DDR_unidDDRDemoExtCover		"0xD31407FF">
+	<!-- EXTERNAL -->
+	<!ENTITY DDR_unidDDRLibrary			    "0xA0030019">
+]>
+
+<TranscendenceExtension UNID="&DDR_unidDDRDemoExtension;"
+	name="Dynamic Data Roms - Demo ROM"
+	credits="Arisaya"
+	release="1"
+	version="1.0.0.0"
+	apiVersion="53"
+	coverImageID=	"&DDR_unidDDRDemoExtCover;"
+	>
+	<Image UNID="&DDR_unidDDRDemoExtCover;"	bitmap="resources/images/covers/DDRCover.png"/>
+
+	<!-- Libraries -->
+
+	<Library unid="&DDR_unidDDRLibrary;"/>
+	<!-- Include the core libraries for API29+ -->
+	<Library unid="&unidCoreTypesLibrary;"/>
+	<Library unid="&unidRPGLibrary;"/>
+	<Library unid="&unidGalaxyLibrary;"/>
+	<Library unid="&unidHumanSpaceLibrary;"/>
+
+    <!-- Dockscreen hook -->
+
+	<ItemType UNID="&DDR_itDemoROM;"
+			name=				"Dynamic Data ROMs - Demo ROM"
+			level=				"1"
+			value=				"0"
+			mass=				"1"
+			frequency=			"notrandom"
+			attributes=			"humanTech; Info; MinorItem; NotForSale"
+
+			description=		"This rom is a demo/template for Dynamic Data ROMs."
+
+			inherit=			"&DDR_baDataRom;"
+			>
+		<Language>
+			<Text id="Title">
+				How to use Dynamic Data ROMs
+			</Text>
+			<Text id="Text">
+				Thanks for downloading Dynamic Data ROMs!
+
+                This demo rom is designed to help you write your own lore ROMs,
+                enabling them to appear in the universe as random loot, vendor
+                items, or from missions - you can use them anywhere that items
+                can be spawned, dropped, or sold!
+
+                To make your own data roms, just copy the &amp;DDR_itDemoROM; item
+                into your own &lt;TranscendenceExtension&gt; or &lt;TranscendenceLibrary&gt;.
+
+                Next, give it a new UNID, a new name, possibly edit the value/frequency/attributes
+                as appropriate, and then change the text inside of the &lt;Text&gt;
+                block to whatever you desire!
+
+                ==Formatting help==
+
+                [TEST] what does this do?
+                
+                "You can add pre-formatted dialogue like this simply by wrapping it in double quotes"
+
+                \"But if you don't want them to format differently than the rest of the text,
+                you can add a backslash before each double quote to display them like this instead.\"
+
+                The game will ignore single newlines followed by more text, and will
+                automatically word-wrap them to fit the text area. It will create a new
+                paragraph area if you use a double-newline however.
+
+                The text area will scroll if the text in the text field is long enough.
+
+                •bullet level 1
+
+                \t•bullet level 2
+                
+                \t\t•bullet level 3
+
+                # number level 1
+                ## number level 2
+                ### number level 3
+
+                ~~code~~ ~~~~code~~~~
+
+                /~~~
+                This is a code block
+                /~~~
+
+                **bold** ~~**bold**~~
+
+                //italics// ~~//italics//~~
+
+                Some special characters will need to be entered manually as special
+                escaped sequencies. For example, an "&amp;" is entered as "&amp;amp;",
+                while a "&lt;" is entered as "&amp;lt;" and a "&gt;" is entered as "&amp;gt;"
+
+			</Text>
+		</Language>
+	</ItemType>
+
+	<ItemType UNID="&DDR_itDemoROMTlisp;"
+			name=				"Dynamic Data ROMs - Tlisp Demo ROM"
+			level=				"1"
+			value=				"0"
+			mass=				"1"
+			frequency=			"notrandom"
+			attributes=			"humanTech; Info; MinorItem; NotForSale"
+
+			description=		"This rom is a demo/template for Dynamic Data ROMs."
+
+			inherit=			"&DDR_baDataRom;"
+			>
+		<Language>
+			<Text id="Title">
+				How to use Dynamic Data ROMs
+			</Text>
+			<Text id="Text">
+				(
+                    cat "Greetings " (plyGetName gPlayer) "! This ROM shows an example of "
+                    "how to composite together multiple strings using the (cat ...) tlisp "
+                    "function!"
+                    "\n\n"
+                    "Formatting this sort of text is a bit weird however and involves more "
+                    "work than normal text dfoes, however it lets you do much more interesting "
+                    "things by evaluating tlisp functions and inserting them as strings."
+                    "\n\n"
+                    "How this works, is that the (cat ...) (short for con[cat]enate) function allows you to input multiple "
+                    "strings or tlisp expressions into it as different arguments, for example"
+                    " (cat \"Hello there \" (plyGetName gPlayer))."
+                    "Two do the double newlines to create new paragraphs, you will need to add in 
+                    "\"\\n\\n\" as one of the string arguments to concatenant."
+                )
+			</Text>
+		</Language>
+	</ItemType>
+
+</TranscendenceExtension>

@@ -1,0 +1,67 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+	<!ENTITY DDR_unidDDRExtension			"0xA003001A">
+    
+	<!ENTITY DDR_vvDockscreenHook			"0xA0031A00">
+
+	<!ENTITY DDR_unidDDRExtCover			"0xA0031AFF">
+
+	<!-- EXTERNAL -->
+	<!ENTITY DDR_unidDDRLibrary			    "0xA0030019">
+]>
+
+<TranscendenceExtension UNID="&DDR_unidDDRExtension;"
+	name="Dynamic Data Roms - Log Viewer"
+	credits="Arisaya"
+	release="1"
+	version="1.0.0.0"
+	apiVersion="53"
+	coverImageID=	"&DDR_unidDDRExtCover;"
+	>
+	<Image UNID="&DDR_unidDDRExtCover;"	bitmap="resources/images/covers/DDRCover.png"/>
+
+	<!-- Libraries -->
+
+	<Library unid="&DDR_unidDDRLibrary;"/>
+	<!-- Include the core libraries for API29+ -->
+	<Library unid="&unidCoreTypesLibrary;"/>
+	<Library unid="&unidRPGLibrary;"/>
+	<Library unid="&unidGalaxyLibrary;"/>
+	<Library unid="&unidHumanSpaceLibrary;"/>
+
+    <!-- Dockscreen hook -->
+
+	<Type UNID="&DDR_vvDockscreenHook;">
+        <Events>
+			<onGlobalPaneInit>
+				; aScreenUNID is the UNID of the screen being shown
+				; aScreen is the screen name (if this is a local screen)
+				; aPane is the pane being shown
+				; shipStatusScreen is the current playership's dockscreen
+				(if 
+					(and
+						(eq aScreenUNID &dsShipInterior;)
+						(or (eq aPane "Default") (eq aPane 'default))
+						(eq gSource gPlayership)
+					)
+					(scrAddAction
+						gScreen
+						'viewSavedDataRoms
+						0
+						"View Saved Data Roms"
+						"D"
+						Nil
+						(scrShowScreen gScreen &DDR_dsListRoms;)
+					)
+				)
+			</onGlobalPaneInit>
+        </Events>
+	</Type>
+
+	<!-- Globals -->
+	<Globals>
+		(setq DDR_gEnableAutoLogging True)
+	</Globals>
+
+</TranscendenceExtension>
