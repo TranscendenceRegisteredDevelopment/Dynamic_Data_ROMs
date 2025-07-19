@@ -5,6 +5,7 @@
     
 	<!ENTITY DDR_itDemoROM			        "0xD3140700">
 	<!ENTITY DDR_itDemoROMTlisp		        "0xD3140701">
+	<!ENTITY DDR_itDemoROMRTF		        "0xD3140702">
 
 	<!ENTITY DDR_unidDDRDemoExtCover		"0xD31407FF">
 	<!-- EXTERNAL -->
@@ -63,45 +64,24 @@
                 as appropriate, and then change the text inside of the &lt;Text&gt;
                 block to whatever you desire!
 
-                ==Formatting help==
-
-                [TEST] what does this do?
+				With basic text blocks like this one, there is very little formatting that you can do.
                 
                 "You can add pre-formatted dialogue like this simply by wrapping it in double quotes"
 
-                \"But if you don't want them to format differently than the rest of the text,
-                you can add a backslash before each double quote to display them like this instead.\"
+                \\"But if you don't want them to format differently than the rest of the text,
+                you can add two backslashes before each double quote to display them like this instead.\\"
 
-                The game will ignore single newlines followed by more text, and will
-                automatically word-wrap them to fit the text area. It will create a new
-                paragraph area if you use a double-newline however.
+                The game will ignore single newlines (hitting enter once) followed by more text, and will
+                automatically word-wrap them to fit the text area. However, It will create a new
+                paragraph if you use a double-newline (hitting enter twice).
 
-                The text area will scroll if the text in the text field is long enough.
+                The scrolling UI enables moving the text up and down by paragraph, so keep in mind that a
+				very long paragraph can potentially overrun the entire text area, cutting off the end.
+				
+				It is strongly recommended to test your data rom by viewing the entire rom and making
+				sure that nothing is cut off.
 
-                •bullet level 1
-
-                \t•bullet level 2
-                
-                \t\t•bullet level 3
-
-                # number level 1
-                ## number level 2
-                ### number level 3
-
-                ~~code~~ ~~~~code~~~~
-
-                /~~~
-                This is a code block
-                /~~~
-
-                **bold** ~~**bold**~~
-
-                //italics// ~~//italics//~~
-
-                Some special characters will need to be entered manually as special
-                escaped sequencies. For example, an "&amp;" is entered as "&amp;amp;",
-                while a "&lt;" is entered as "&amp;lt;" and a "&gt;" is entered as "&amp;gt;"
-
+				Check out the "Tlisp Demo ROM" and the "Rich Text Demo ROM" for more advanced options.
 			</Text>
 		</Language>
 	</ItemType>
@@ -114,31 +94,156 @@
 			frequency=			"notrandom"
 			attributes=			"humanTech; Info; MinorItem; NotForSale"
 
-			description=		"This rom is a demo/template for Dynamic Data ROMs."
+			description=		"This rom is a demo/template for Tlisp in Dynamic Data ROMs."
 
 			inherit=			"&DDR_baDataRom;"
 			>
 		<Language>
 			<Text id="Title">
-				How to use Dynamic Data ROMs
+				How to use Tlisp in Dynamic Data ROMs
 			</Text>
 			<Text id="Text">
-				(
-                    cat "Greetings " (plyGetName gPlayer) "! This ROM shows an example of "
+				(cat
+                    (fmtCompose "Greetings %Name%! This ROM shows an example of ")
                     "how to composite together multiple strings using the (cat ...) tlisp "
                     "function!"
                     "\n\n"
-                    "Formatting this sort of text is a bit weird however and involves more "
-                    "work than normal text dfoes, however it lets you do much more interesting "
+                    "Formatting this sort of text is a bit more involved and requires more "
+                    "work than normal text does, however it lets you do much more interesting "
                     "things by evaluating tlisp functions and inserting them as strings."
                     "\n\n"
                     "How this works, is that the (cat ...) (short for con[cat]enate) function allows you to input multiple "
-                    "strings or tlisp expressions into it as different arguments, for example"
-                    " (cat \"Hello there \" (plyGetName gPlayer))."
-                    "Two do the double newlines to create new paragraphs, you will need to add in 
-                    "\"\\n\\n\" as one of the string arguments to concatenant."
+                    "strings or tlisp expressions into it as different arguments, for example:"
+					"\n\n"
+                    " (cat \"You are flying a \" (objGetName gPlayership))"
+					"\n\n"
+                    "To do the double newlines to create new paragraphs, you will need to add in "
+                    "\"\\\\n\\\\n\" as one of the string arguments to concatenant."
                 )
 			</Text>
+		</Language>
+	</ItemType>
+
+	<ItemType UNID="&DDR_itDemoROMRTF;"
+			name=				"Dynamic Data ROMs - Rich Text Demo ROM"
+			level=				"1"
+			value=				"0"
+			mass=				"1"
+			frequency=			"notrandom"
+			attributes=			"humanTech; Info; MinorItem; NotForSale"
+
+			description=		"This rom is a demo/template for Rich Text Formatting in Dynamic Data ROMs."
+
+			inherit=			"&DDR_baDataRom;"
+			>
+		<Language>
+			<Text id="Title">
+				How to use Rich Text in Dynamic Data ROMs
+			</Text>
+			<RTF id="Text">
+				{/rtf
+					{/f:Title;/c:#79828c; Rich Text Formatting in Dynamic Data Roms}
+
+					{/f:SubTitle;/c:#79828c; An Advanced Tutorial}
+
+					This ROM will show you the power of {/f:LargeBold;/c:#80C0C0; rich text formatting} (RTF) in Dynamic Data Roms!
+                    
+                    {/f:LargeBold;/c:#FF0000; Note:} in order to preserve the formatting while scrolling, and due to
+                    rudimentary default string operations available in Tlisp, the scrolling system in 1.9.2 is forced to use
+                    a lot of string operations implemented in Tlisp rather than native C++ and this can cause performance
+                    issues on computers with weak single threaded performance if you have a long RTF document with many RTF tags inside.
+
+					{/f:HeaderBold;/c:#79828c; How to use RTF formatting}
+                    
+                    {/f:LargeBold;/c:#FF0000; Note:} this section uses descriptions in the example text
+                    instead of curly braces and forward slashes becaue you cannot escape these characters in
+                    RTF text as of version 1.9.2.
+
+					To use RTF formatting, you first need to encapsulate your entire text in curly braces.
+                    The first opening curly brace must be followed by a forward slash and then the text "rtf"
+
+					Once you have done this step, you can create spans of text inside the "rtf" and closing curly brace
+					by creating spans that specify a font, font modifiers - bold or italics, font color, or line spacing.
+
+					To create a span, first open with an opening curly brace
+
+					Then, add a forward slash and a format code like so:
+
+					{/f:LargeBold;/c:#CCCC00; f} - Specific font - see Font Samples for valid font names
+
+					{/f:LargeBold;/c:#CCCC00; c} - Colored Text - any 24 bit color works, specified in HTML-style such as #FFFFFF
+
+                    Format codes that accept a parameter take a single colon between the format code and the parameter, followed by a semicolon after the parameter.
+
+					Once you have added a format code, in some cases you can add more format codes, separated by a semicolon.
+                    Here is some {/f:LargeBold;/c:#FF00FF; Bold and Magenta} text as an example.
+                    Not all format codes support additional format codes however.
+
+					After you have added the format codes you desire, you can then add the text you want formatted in that style.
+					Note that you can even nest format spans inside of each other!
+
+					Finally, close out your span with a closing curly brace.
+
+                    {/c:#FFFF00;
+                    You can even use a span across multiple paragraphs.
+
+                    This was done with just one span
+                    }
+
+                    Note that there are several other format codes specified in the code, however they do not appear to be working in 1.9.2.
+                    These codes are:
+
+					{/f:LargeBold;/c:#CC0000; b} - Bold Text (Same as the font LargeBold)
+
+					{/f:LargeBold;/c:#CC0000; i} - Itallic Text
+
+					{/f:LargeBold;/c:#CC0000; lineSpacing} - Line Spacing - takes integer line spaces
+
+					{/f:HeaderBold;/c:#79828c; Color Samples}
+
+					{/c:#FFFFFF; #FFFFFF}
+
+					{/c:#FF0000; #FF0000}
+
+					{/c:#00FF00; #00FF00}
+
+					{/c:#0000FF; #0000FF}
+
+					{/c:#FFFF00; #FFFF00}
+
+					{/c:#FF00FF; #FF00FF}
+
+					{/c:#00FFFF; #00FFFF}
+
+					{/c:#000000; #000000}
+
+					{/f:HeaderBold;/c:#79828c; Font Samples}
+
+					{/f:Small; Small}
+
+					{/f:Medium; Medium}
+
+					{/f:MediumBold; MediumBold}
+
+					{/f:MediumHeavyBold; MediumHeavyBold}
+
+					{/f:Large; Large}
+
+					{/f:LargeBold; LargeBold}
+
+					{/f:Header; Header}
+
+					{/f:HeaderBold; HeaderBold}
+
+					{/f:SubTitle; SubTitle}
+
+					{/f:SubTitleBold; SubTitleBold}
+
+					{/f:SubTitleHeavyBold; SubTitleHeavyBold}
+
+					{/f:Title; Title}
+				}
+			</RTF>
 		</Language>
 	</ItemType>
 

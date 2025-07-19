@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+	<!ENTITY DDR_unidDDRDebugExtension		"0xD3140008">
+
+	<!ENTITY DDR_itDebugROMRTF		"0xD3140800">
+
+	<!ENTITY DDR_unidDDRDebugExtCover		"0xD31408FF">
+	<!-- EXTERNAL -->
+	<!ENTITY DDR_unidDDRLibrary			    "0xA0030019">
+]>
+
+<TranscendenceExtension UNID="&DDR_unidDDRDebugExtension;"
+	name="Dynamic Data Roms - Debug Mod"
+	credits="Arisaya"
+	release="1"
+	version="1.0.0.0"
+	apiVersion="53"
+	coverImageID=	"&DDR_unidDDRDebugExtCover;"
+	>
+	<Image UNID="&DDR_unidDDRDebugExtCover;"	bitmap="resources/images/covers/DDRCover.png"/>
+
+	<!-- Libraries -->
+
+	<Library unid="&DDR_unidDDRLibrary;"/>
+
+    <Globals>
+        (block Nil
+            (setq DDR_dbgTxt (lambda Nil (DDR_getTemp DDR_tmpSourceTxt)))
+            (setq DDR_dbgCutoff (lambda Nil (join (subset (DDR_strSplit (DDR_dbgTxt) "\n\n") 0 3) " ")))
+            (setq DDR_dbgChunks (lambda Nil (DDR_strSplit (DDR_padRTFText (DDR_dbgCutoff)) DDR_strRTFBraceOpen)))
+        )
+    </Globals>
+
+    
+
+	<ItemType UNID="&DDR_itDebugROMRTF;"
+			name=				"Dynamic Data ROMs - Rich Text DEBUG ROM"
+			level=				"1"
+			value=				"0"
+			mass=				"1"
+			frequency=			"notrandom"
+			attributes=			"humanTech; Info; MinorItem; NotForSale"
+
+			description=		"This rom contains simple RTF for debugging Rich Text Formatting in Dynamic Data ROMs."
+
+			inherit=			"&DDR_baDataRom;"
+			>
+		<Language>
+			<Text id="Title">
+				Debugging Rich Text in Dynamic Data ROMs
+			</Text>
+			<RTF id="Text">
+				{/rtf
+					{/f:Title;/c:#79828c; Rich Text Formatting in Dynamic Data Roms}
+
+					{/f:SubTitle;/c:#79828c; An Advanced Tutorial}
+
+					This ROM will show you the power of {/f:MediumBold;/c:#80C0C0; rich text formatting} (RTF) in Dynamic Data Roms!
+
+					{/f:HeaderBold;/c:#79828c; How to use RTF formatting}
+
+					REMOVED
+
+					{/f:HeaderBold;/c:#79828c; Color Samples}
+
+					{/c:#FFFFFF; #FFFFFF}
+					{/c:#FF0000; #FF0000}
+					{/c:#00FF00; #00FF00}
+					{/c:#0000FF; #0000FF}
+					{/c:#FFFF00; #FFFF00}
+					{/c:#FF00FF; #FF00FF}
+					{/c:#00FFFF; #00FFFF}
+					{/c:#000000; #000000}
+
+					{/f:HeaderBold;/c:#79828c; Font Samples}
+
+					{/f:Small; Small}
+
+					{/f:Medium; Medium}
+
+					{/f:MediumBold; MediumBold}
+
+					{/f:MediumHeavyBold; MediumHeavyBold}
+
+					{/f:Large; Large}
+
+					{/f:LargeBold; LargeBold}
+
+					{/f:Header; Header}
+
+					{/f:HeaderBold; HeaderBold}
+
+					{/f:SubTitle; SubTitle}
+
+					{/f:SubTitleBold; SubTitleBold}
+
+					{/f:SubTitleHeavyBold; SubTitleHeavyBold}
+
+					{/f:Title; Title}
+				}
+			</RTF>
+		</Language>
+	</ItemType>
+
+</TranscendenceExtension>

@@ -174,7 +174,7 @@
 						;	Set the scroll position
 						(DDR_setTemp DDR_tmpScrollCount 0)
 						(DDR_setTemp 'DDR_sourceText (if theText theText ""))
-						(if (ls (count (split theText "\n\n")) 2) (DDR_disableScrollDown))
+						(if (DDR_canScroll theText) (DDR_disableScrollDown))
 						)
 				</OnPaneInit>
 				<Actions>
@@ -190,8 +190,16 @@
 
     <Type UNID="&DDR_vvLang;" virtual="true">
 		<Language>
-			<Text id="ds.scrollUp">[PageUp] Scoll Up</Text>
-			<Text id="ds.scrollDown">[PageDown] Scoll Down</Text>
+			<Text id="ds.scrollUp">[W] Scoll Up</Text>
+			<Text id="ds.scrollDown">[S] Scoll Down</Text>
+			<Text id="str.colon">:</Text>
+			<Text id="str.semicolon">;</Text>
+			<Text id="str.braceOpen">\{</Text>
+			<Text id="str.braceClose">\}</Text>
+			<Text id="str.rtfBraceOpen">\{\\</Text>
+			<Text id="str.rtfHeaderOpen">\{\\rtf</Text>
+			<Text id="syntax.highlighting.fix.ignore.this">\}\}</Text>
+			<Text id="str.backslash">\\</Text>
 		</Language>
 	</Type>
 
@@ -246,7 +254,7 @@
 						;	Set the scroll position
 						(DDR_setTemp DDR_tmpScrollCount 0)
 						(DDR_setTemp 'DDR_sourceText (if theText theText ""))
-						(if (ls (count (split theText "\n\n")) 2) (DDR_disableScrollDown))
+						(if (DDR_canScroll theText) (DDR_disableScrollDown))
 
 						;	Store the ROM (if auto logging is enabled)
 						(DDR_addLogAuto {title: theTitle text: theText})
@@ -280,7 +288,7 @@
 		(setq DDR_addLog (lambda (log) (block (
 				(theLogs (DDR_getLogs))
 			)
-			(if (eq Nil theLogs) (setq theLogs (lnk)))
+			(if (eq Nil theLogs) (setq theLogs (list)))
 			(DDR_setLogs (lnkAppend theLogs log))
 		)))
 
@@ -303,7 +311,325 @@
 		(setq DDR_setTemp (lambda (key value) (typSetData &DDR_vvTempData; key value)))
 		(setq DDR_getTemp (lambda (key) (typGetData &DDR_vvTempData; key)))
 
+		;;	General Helpers
+
+		;; 	DDR_splitNOffset
+		;	Splits a string by a delimiter, and returns a list of elements
+		;	spanning from skipSplits to maxSplits
+		;	If maxSplits is negative, splits from the end instead
+		;	If includeEdges is True, will include the non-split segments before and after the split section
+		(setq DDR_splitNOffset (lambda (text delimiter maxSplits skipSplits includeEdges) (block 
+			(
+				(allChunks (DDR_strSplit text delimiter))
+				(chunkCount (count allChunks))
+				(rawSplits (- chunkCount 1))
+			)
+			(if (gr rawSplits skipSplits)
+				(block (splitChunks (subset allChunks skipSplits maxSplits))
+					(if includeEdges
+					(block
+						(
+							(endSegment (join (subset allChunks (+ skipSplits maxSplits)) delimiter))
+							(startSegment (join (subset allChunks 0 skipSplits) delimiter))
+							(hasEndSegment (gr (count endSegment) 0))
+							(hasStartSegment (gr (count startSegment) 0))
+							(initialLnk (if hasStartSegment (append (lnk startSegment) splitChunks) splitChunks))
+							(finalLnk (if hasEndSegment (lnkAppend initialLnk endSegment) initialLnk))
+						)
+						finalLnk
+					)
+					;;	otherwise we just return the split
+					splitChunks
+					)
+				)
+				;;	If we had nothing to split we just return an empty list
+				(if includeEdges (lnk text) (list))
+			)
+		)))
+
+		(setq DDR_splitN (lambda (text delimiter maxSplits) (DDR_splitNOffset text delimiter maxSplits 0)))
+
+		(setq DDR_strReplace (lambda (text strToReplace strReplacement) (join (DDR_strSplit text strToReplace) strReplacement)))
+
+		(setq DDR_strContains (lambda (text searchText) (gr (count (DDR_strSplit text searchText)) 1)))
+
+		(setq DDR_strStartsWith (lambda (text searchText) (eq (DDR_strSlice text 0 (count searchText)) searchText)))
+		(setq DDR_strEndsWith (lambda (text searchText) (eq (DDR_strSlice text (- (count text) (count searchText)) (count searchText)) searchText)))
+
+		(setq DDR_strSlice (lambda (text startPos count) (block ((ret (subset text startPos count))) (if (eq ret Nil) "" ret))))
+
+		(setq DDR_strSplit (lambda (text delim) (block
+			(
+				(pos 0)
+				(last_end 0)
+				(size (count delim))
+				(maxPos (- (count text) size))
+				(ret (list))
+			)
+			(while (leq pos maxPos)
+				(block
+					(
+						(slice (DDR_strSlice text pos size))
+						(matches (eq slice delim))
+					)
+					(if matches
+						;;if we match then we need to jump ahead and add this in
+						(block Nil
+							(lnkAppend ret (DDR_strSlice text last_end (- pos last_end)))
+							(setq pos (+ pos size))
+							(setq last_end pos)
+						)
+						;;otherwise we iterate to the next slice
+						(setq pos (+ pos 1))
+					)
+				)
+			)
+			;;add the last segment and return
+			(lnkAppend ret (DDR_strSlice text last_end (- (count text) last_end)))
+		)))
+
+		(setq DDR_strStrip (lambda (text) (block Nil
+			(while (or
+					(DDR_strStartsWith text " ")
+					(DDR_strStartsWith text "\t")
+					(DDR_strStartsWith text "\n")
+				)
+				(setq text (DDR_strSlice text 1 (count text)))
+			)
+			(while (or
+					(DDR_strEndsWith text " ")
+					(DDR_strEndsWith text "\t")
+					(DDR_strEndsWith text "\n")
+				)
+				(setq text (DDR_strSlice text 0 (- (count text) 1)))
+			)
+			text
+		)))
+
+		;;	RTF helpers
+
+		(setq DDR_strCountOccurrences (lambda (theText delimiter) (- (count (DDR_strSplit theText delimiter)) 1)))
+		
+		(setq DDR_containsRTF (lambda (theText) (gr (count (DDR_strSplit theText DDR_strRTFOpenTag)) 1)))
+
+		(setq DDR_hasRTFSpanStart (lambda (theText) (gr (count (DDR_strSplit theText DDR_strRTFBraceOpenFull)) 1)))
+		(setq DDR_hasRTFSpanEnd (lambda (theText) (gr (count (DDR_strSplit theText DDR_strRTFBraceClose)) 1)))
+
+		(setq DDR_padRTFTextFront (lambda (theText) (if (DDR_strStartsWith theText DDR_strRTFBraceOpenFull) (cat " " theText) theText)))
+		(setq DDR_padRTFTextBack (lambda (theText) (if (DDR_strEndsWith theText DDR_strRTFBraceClose) (cat theText " ") theText)))
+		(setq DDR_padRTFText (lambda (theText) (DDR_padRTFTextBack (DDR_padRTFTextFront theText))))
+
+		;; DDR_extractOutermostSpans
+		;	Returns a list of the text of all spans at this span level
+		;	Includes the full rtf markup around the span
+		;	Remove the markup before passing in again, otherwise you get
+		;	The same output as input
+		(setq DDR_extractOutermostSpans (lambda (theText)
+			(if (not (and (DDR_hasRTFSpanEnd theText) (DDR_hasRTFSpanStart theText)))
+				;;If we are not a span, just return the txt directly
+				theText
+				;;Else we work on extracting the outermost span
+				(block
+					(
+						(spanChunks (DDR_strSplit (DDR_padRTFText theText) DDR_strRTFBraceOpen))
+						(curSpanLevel 0)
+						(curOuterSpan (list))
+						(curOuterSpans (list))
+						(curPos 0)
+					)
+					(enum spanChunks chunk
+						(block Nil
+							(if (eq 1 curSpanLevel)
+								;;if we are one level in, append chunk
+								(lnkAppend curOuterSpan chunk)
+							)
+							(if (neq 0 curSpanLevel)
+								;;if we are not at the outermost level, see if we need to descend
+								(if (DDR_hasRTFSpanEnd chunk)
+									;;handle descent
+									(block (
+											(descendingChunks (DDR_strSplit chunk DDR_strRTFBraceClose))
+											(lastIdx (- (count descendingChunks) 1))
+											(secondLastIdx (- lastIdx 1))
+										)
+										(setq curSpanLevel (- curSpanLevel lastIdx))
+										(if (eq curSpanLevel 1)
+											;;if we are still inside of the span, we just append the whole chunk
+											(lnkAppend curOuterSpan chunk)
+										)
+										(if (eq curSpanLevel 0)
+											(block Nil
+												;;if we are now at the lowest level we need to append up through the second to last instead
+												(lnkAppend curOuterSpan (join (subset descendingChunks 0 lastIdx) DDR_strRTFBraceClose))
+												;;additionally we now need to conclude this outer span and start on the next
+												(lnkAppend curOuterSpans curOuterSpan)
+												(setq curOuterSpan (list))
+											)
+										)
+									)
+								)
+							)
+							;;every jump to a new chunk raises the level by one as we are nesting in
+							(setq curSpanLevel (+ curSpanLevel 1))
+						)
+					)
+					;;now we just need to reassemble all of the outer spans and return them
+					(map curOuterSpans span (join span DDR_strRTFBraceOpen))
+				)
+			)
+		))
+
+		;; DDR_extractBrokenSpans
+		;	Returns the text of all spans that are broken in this text as a list of broken spans
+		;	ie that do not return to a lower level
+		;	omits the text of any complete spans
+		;	omits the leading curlybrace and backslash of each span
+		(setq DDR_extractBrokenSpans (lambda (theText)
+			(if (DDR_hasRTFSpanStart theText)
+				;;If we have a span, we need to return any broken spans
+				(block
+					(
+						(spanChunks (DDR_strSplit (DDR_padRTFText theText) DDR_strRTFBraceOpen))
+						(curSpanLevel 0)
+						(curSpanStack (list))
+						(curPos 0)
+					)
+					(enum spanChunks chunk
+						(block Nil
+							(dbgOutput (cat "entering at: " curSpanLevel))
+							(dbgOutput (cat "curStack: " curSpanStack))
+							(dbgOutput chunk)
+							(if (neq 0 curSpanLevel)
+								;;if we are not at the outermost level we need to accumulate to our stack, see if we need to descend
+								(if (DDR_hasRTFSpanEnd (DDR_padRTFText chunk))
+									;;handle descent
+									(block (
+											(descendingChunks (DDR_strSplit (DDR_padRTFText chunk) DDR_strRTFBraceClose))
+											(lastIdx (- (count descendingChunks) 1))
+										)
+										(dbgOutput descendingChunks)
+										(setq curSpanLevel (- curSpanLevel lastIdx))
+										(if (gr curSpanLevel 0)
+											;;if we are still inside of the span
+											(block Nil
+												;; we append the last chunk at the right level
+												(lnkAppend (@ curSpanStack curSpanLevel) (@ descendingChunks lastIdx))
+												;; we then remove all parts of the stack that were closed out
+												(setq curSpanStack (subset curSpanStack 0 curSpanLevel))
+											)
+											;;if we are now at the lowest level everything is closed out so just reset the stack
+											(setq curSpanStack (list))
+										)
+									)
+									;;otherwise we just add it to the top of the stack
+									(lnkAppend curSpanStack (list chunk))
+								)
+							)
+							(dbgOutput (cat "curStack: " curSpanStack))
+							(dbgOutput (cat "ending at: " curSpanLevel))
+							;;every jump to a new chunk raises the level by one as we are nesting in
+							(setq curSpanLevel (+ curSpanLevel 1))
+						)
+					)
+					;;now we just need to reassemble all of the spans and return them
+					(map curSpanStack spanParts (join spanParts " "))
+				)
+				;;we just return Nil if we are not a span so nothing to do here
+			)
+		))
+		
+		;;	DDR_getRTFTag
+		;	Returns the rtf tag and parameter if present or Nil if not a tag
+		;	Does not return leading backslash
+		(setq DDR_getRTFTag (lambda (theText)
+			(block Nil
+				(setq theText (DDR_strStrip theText))
+				(if 
+					;; cannot have interior whitespace inside of the rtf tag
+					(not (DDR_strContains theText " "))
+					;;	may or may not start with a backslash so remove it
+					(Block Nil
+						(if (DDR_strContains theText DDR_strforwardslash)
+							(setq theText (@ (DDR_strSplit theText DDR_strforwardslash) 1))
+						)
+						(dbgOutput (cat "Eval Possible Tag: " theText))
+						;;	must be a valid rtf tag
+						(if (DDR_strContains theText DDR_strColon)
+							;;if we are a tag with parameters - note that in 1.9.2 lineSpacing b and i are broken and do not seem to work
+							(block (
+									(subText (@ (DDR_strSplit theText DDR_strColon) 0))
+									)
+								(if (or
+										(eq subText "f")
+										(eq subText "c")
+										(eq subText "lineSpacing")
+									)
+									theText
+								)
+							)
+							;;if we are a tag without parameters
+							(if (or
+									(eq theText "b")
+									(eq theText "i")
+									(eq theText "rtf")
+								)
+								theText
+							)
+						)
+					)
+				)
+			)
+		))
+
+		;;	DDR_extractBrokenSpanHeaders
+		;	Return a list of span headers of broken spans in text
+		(setq DDR_extractBrokenSpanHeaders (lambda (theText) (block
+			(
+				(brokenSpans (DDR_extractBrokenSpans theText))
+			)
+			(dbgOutput brokenSpans)
+			(map brokenSpans brokenSpan
+				(block
+					(
+						(headerParts (DDR_strSplit brokenSpan DDR_strSemiColon))
+					)
+					(dbgOutput brokenSpan)
+					(dbgOutput headerParts)
+					(cat
+						DDR_strRTFBraceOpen
+						(join
+							(map
+								(map headerParts 'excludeNil headerPart (DDR_getRTFTag headerPart))
+								headerTag
+								(if
+									(DDR_strContains headerTag "rtf")
+									;;	no semicolon for rtf tag
+									(cat DDR_strforwardslash headerTag)
+									;;	otherwise add the semicolon
+									(cat DDR_strforwardslash headerTag DDR_strSemiColon)
+								)
+							)
+						)
+						" "
+					)
+				)
+			)
+		)))
+
+		;;	DDR_assembleScrollRTFHeader
+		;	Returns the composite RTF header for the cut off portion of the scroll if any broken headers are cut by the scroll system
+		(setq DDR_assembleScrollRTFHeader (lambda (theText)
+			(block
+				( 
+					(ret (join (DDR_extractBrokenSpanHeaders theText) " "))
+				)
+				(if ret (cat ret " ") ret)
+			)
+		))
+
 		;;	Scroll control helpers
+		(setq DDR_canScroll (lambda (theText) (ls (count (DDR_strSplit theText "\n\n")) 2)))
+
 		(setq DDR_addScroll
 			(lambda Nil
 				(block Nil
@@ -312,8 +638,8 @@
 						DDR_actScrollUp
 						0
 						(typTranslate &DDR_vvLang; 'ds.scrollUp)
-						"Page Up"
-						"pgUpKey"
+						"W"
+						"w"
 						(DDR_scrollUp)
 					)
 					(scrAddAction
@@ -321,8 +647,8 @@
 						DDR_actScrollDown
 						1
 						(typTranslate &DDR_vvLang; 'ds.scrollDown)
-						"Page Down"
-						"pgDnKey"
+						"S"
+						"s"
 						(DDR_scrollDown)
 					)
 					(DDR_setTemp DDR_tmpScrollCount 0)
@@ -340,11 +666,14 @@
 			(lambda Nil
 				(block (
 					(scrollCount (- (DDR_getTemp DDR_tmpScrollCount) 1))
-					(scrollChunks (split (DDR_getTemp DDR_tmpSourceTxt) "\n\n"))
+					(scrollChunks (DDR_strSplit (DDR_getTemp DDR_tmpSourceTxt) "\n\n"))
 					(scrollTextChunks (subset scrollChunks scrollCount))
+					(scrollTextCutoff (subset scrollChunks 0 scrollCount))
+					(scrollRTFPrefix (DDR_assembleScrollRTFHeader (join scrollTextCutoff " ")))
 					(scrolledText (join scrollTextChunks "\n\n"))
+					(finalText (if scrollRTFPrefix (cat scrollRTFPrefix scrolledText) scrolledText))
 					)
-					(scrSetDisplayText gScreen "text" scrolledText)
+					(scrSetDisplayText gScreen "text" finalText)
 					(DDR_setTemp DDR_tmpScrollCount scrollCount)
 					(if (eq 0 scrollCount) (DDR_disableScrollUp))
 					(DDR_enableScrollDown)
@@ -356,18 +685,30 @@
 			(lambda Nil
 				(block (
 					(scrollCount (+ (DDR_getTemp DDR_tmpScrollCount) 1))
-					(scrollChunks (split (DDR_getTemp DDR_tmpSourceTxt) "\n\n"))
+					(scrollChunks (DDR_strSplit (DDR_getTemp DDR_tmpSourceTxt) "\n\n"))
 					(scrollTextChunks (subset scrollChunks scrollCount))
+					(scrollTextCutoff (subset scrollChunks 0 scrollCount))
+					(scrollRTFPrefix (DDR_assembleScrollRTFHeader (join scrollTextCutoff " ")))
 					(scrolledText (join scrollTextChunks "\n\n"))
+					(finalText (if scrollRTFPrefix (cat scrollRTFPrefix scrolledText) scrolledText))
 					(numChunks (count scrollTextChunks))
 					)
-					(scrSetDisplayText gScreen "text" scrolledText)
+					(scrSetDisplayText gScreen "text" finalText)
 					(DDR_setTemp DDR_tmpScrollCount scrollCount)
 					(if (eq 1 numChunks) (DDR_disableScrollDown))
 					(DDR_enableScrollUp)
 				)
 			)
 		)
+
+		;;	Special character sequences
+		(setq DDR_strforwardslash "/")
+		(setq DDR_strColon ":")
+		(setq DDR_strSemiColon ";")
+		(setq DDR_strRTFBraceOpen "\{")
+		(setq DDR_strRTFBraceOpenFull "\{/")
+		(setq DDR_strRTFOpenTag "\{/rtf")
+		(setq DDR_strRTFBraceClose "\}")
 	)
 	</Globals>
 
