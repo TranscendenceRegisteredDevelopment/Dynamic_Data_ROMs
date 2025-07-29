@@ -31,6 +31,35 @@
 	<Library unid="&unidGalaxyLibrary;"/>
 	<Library unid="&unidHumanSpaceLibrary;"/>
 
+	<!-- INSTRUCTIONS
+	To make your own roms with these demo templates, follow these steps:
+	Prep:
+	1) Copy the Entity and <Library> tag for DDR_unidDDRLibrary into your mod.
+	Making a rom:
+	1) copy the template into the appropriate section of your mod
+	2) change the copy's UNID field to a new unique value
+	3) copy the template's matching UNID ENTITY and change it to the new unique value from step 2
+	4) change the hexadecimal number (0xPRFX####) to a unique value (remember to match the 'PRFX' part with your UNID range)
+	5) go back to your copy of the template now and fill out the attributes:
+		A) name: swap this to an item name for your rom. This is the name it displays in the inventory
+		B) level: optionally change this - for lore roms, it will mainly adjust where it shows up in loot or for sale
+		C) value: optionally change this - its just the base price in the adventure's default currency (credits for SOTP/EP/COHS)
+		D) mass: optionally change this - this is the mass in kg of this item (must be an integer)
+		E) frequency: optionally change this - it will mainly adjust where it shows up in loot or for sale.
+			i) notRandom prevents it from randomly dropping and it must be added directly to inventories or spawned via script to show up.
+			ii) valid values include: common uncommon rare veryRare notRandom
+			iii) veryRare has a weight of 1, rare of 3, uncommon of 10, common of 20
+		F) attributes: optionally change this:
+			i) remove NotForSale if you want this to show up in stores
+			ii) add a faction name attribute (ex, commonwealth, ares - note some expansions like TSB prefix attributes, ex TSB_coalition) to associate it with loot lists & stores (doesnt always work if faction lacks faction-specific loot tables)
+		G) description: this description shows up when viewing the item in an inventory (looting treasure, a shop, your cargo bay)
+		H) DO NOT TOUCH: inherit - this is used for dynamic data rom functionality
+	6) Next, fill out the language sections:
+		A) title: this is the title of your rom that displays when reading it, as well as in the dynamic data roms library feature, where it shows as the selectable name of the rom
+		B) text: this is the text of your rom! Note, if you want to use Rich Formatted Text (RTF) you need to change the <Text id="Text">...</Text> into <RTF id="Text">...</RTF> (you can use the RTF template for this)
+	7) your rom should be ready to go!
+	-->
+
     <!-- Dockscreen hook -->
 
 	<ItemType UNID="&DDR_itDemoROM;"
