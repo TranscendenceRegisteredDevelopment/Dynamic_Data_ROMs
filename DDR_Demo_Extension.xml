@@ -16,7 +16,7 @@
 	name="Dynamic Data Roms - Demo ROM"
 	credits="Arisaya"
 	release="1"
-	version="1.0.0.0"
+	version="1.0.0.1"
 	apiVersion="53"
 	coverImageID=	"&DDR_unidDDRDemoExtCover;"
 	>
