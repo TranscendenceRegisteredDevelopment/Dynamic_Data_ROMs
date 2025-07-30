@@ -102,7 +102,9 @@
 
                 The game will ignore single newlines (hitting enter once) followed by more text, and will
                 automatically word-wrap them to fit the text area. However, It will create a new
-                paragraph if you use a double-newline (hitting enter twice).
+                paragraph if you use a double-newline (hitting enter twice). If you want to force a new line
+				within the same paragraph, use a backslash followed by an n:\n
+				The line that follows (like this one) will be on a new line, but part of the same paragraph.
 
                 The scrolling UI enables moving the text up and down by paragraph, so keep in mind that a
 				very long paragraph can potentially overrun the entire text area, cutting off the end.
